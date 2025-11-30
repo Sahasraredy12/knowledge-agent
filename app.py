@@ -1,17 +1,16 @@
-import streamlit as st
+import streamlit as st 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from langchain_community.vectorstores import Chroma
 from sklearn.metrics.pairwise import cosine_similarity
 from groq import Groq
-
-DB_DIR = "vectorstore"
-COLLECTION_NAME = "knowledge_base"
-
-# Load Groq client
 import os
 from dotenv import load_dotenv
-from groq import Groq
+
+# --- Auto-run ingest if vectorstore doesn't exist ---
+if not os.path.exists("vectorstore"):
+    import ingest
+    ingest.main()
 
 # Load .env variables
 load_dotenv()  # looks for .env in the project root
@@ -19,7 +18,8 @@ load_dotenv()  # looks for .env in the project root
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY)
 
-
+DB_DIR = "vectorstore"
+COLLECTION_NAME = "knowledge_base"
 
 @st.cache_resource
 def load_db_and_model():
