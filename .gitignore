@@ -5,13 +5,22 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Virtual env
+# Virtual environments
 venv/
 env/
+.venv/
 
 # Chroma DB storage
 vectorstore/
 
 # Streamlit cache
 .streamlit/
+
+# Environment variables
+.env
+
+# VSCode files
+.vscode/

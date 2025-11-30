@@ -1,15 +1,17 @@
-📚 Knowledge Base QA Agent
+📚 Knowledge Base QA Agent (Groq)
+=================================
 
-An intelligent question–answering agent that reads PDFs & text files, builds embeddings, stores them in a Chroma vector database, and answers questions using a local LLM (Ollama + llama3) with retrieval‑augmented generation (RAG).
+An intelligent question-answering agent that reads PDFs & text files, builds embeddings, stores them in a Chroma vector database, and answers questions using **Groq** LLM (llama-3.1-8b-instant) with retrieval-augmented generation (RAG).
 
 ---
 
 ## 🚀 Overview of the Agent
 
-This project lets you load company documents such as HR policies, onboarding guides, FAQs, and project descriptions into a vector store and ask natural‑language questions about them.  
-The agent retrieves the most relevant chunks using semantic similarity and then asks a local llama3 model (via Ollama) to generate short, clear answers grounded in those documents.
+This project allows you to load internal company documents such as HR policies, onboarding guides, FAQs, and project descriptions into a **vector store** and ask natural-language questions about them.
 
-You can switch between different “workspaces” (HR docs, project docs, or all docs), see which documents were used as sources, and chat with the agent over multiple turns.
+The agent retrieves the most relevant document chunks using semantic similarity and sends the context + user query to the **Groq LLM** (local llama-3 model) to generate concise answers.
+
+You can select different “workspaces” (HR Docs, Project Docs, or All), see the sources used for the answers, and maintain chat history for multi-turn interactions.
 
 ---
 
@@ -18,44 +20,39 @@ You can switch between different “workspaces” (HR docs, project docs, or all
 ### Features
 
 - **Document ingestion**
-  - Supports PDF and TXT files placed in the `docs/` folder.
-  - Automatic chunking of documents with overlap for better context.
+  - Supports PDF and TXT files in the `docs/` folder.
+  - Automatic chunking with overlap to retain context.
 
 - **Semantic retrieval**
-  - Uses `SentenceTransformer` (`all-MiniLM-L6-v2`) to generate embeddings.
-  - Stores embeddings in a local **Chroma** vector database.
-  - Retrieves top‑k most relevant chunks using cosine similarity.
+  - Embeddings generated via `SentenceTransformer` (`all-MiniLM-L6-v2`).
+  - Stored locally in **Chroma** vector database.
+  - Retrieves top-k relevant chunks using cosine similarity.
 
-- **LLM‑powered answers (RAG)**
-  - Sends the user question + retrieved context to **llama3** running locally via **Ollama**.
-  - Generates concise, 2–4 sentence answers grounded in the retrieved chunks.
-  - Gracefully says “don’t know” when the answer is not in the documents.
+- **LLM-powered answers (RAG)**
+  - Uses **Groq** LLM (`llama-3.1-8b-instant`) for answer generation.
+  - Concise, 2–4 sentence responses grounded in retrieved chunks.
+  - Returns “I don’t know” if answer is missing from documents.
 
 - **Workspaces**
   - **All** – search across every ingested document.
-  - **HR Docs** – focuses on leave policy, handbook, onboarding, and HR FAQs.
-  - **Projects** – focuses on project PDFs (e.g., yoga pose detection, fracture detection).
+  - **HR Docs** – focuses on HR-related documents.
+  - **Projects** – focuses on project-specific PDFs.
 
 - **Chat experience**
-  - Per‑session chat history so follow‑up questions stay in context.
-  - Sidebar button to **clear chat history** at any time.
-  - “Sources” expander that shows the top‑matching chunks and their document names/types.
+  - Session-based chat history with last 5 turns retained.
+  - Clear chat history button in sidebar.
+  - Sources panel shows top-matching document chunks.
 
 - **Simple UI**
-  - Built with **Streamlit**: single‑page app with question box, workspace selector, answer area, sources panel, and chat transcript.
+  - Single-page **Streamlit** app with question box, workspace selector, answer area, sources, and chat transcript.
 
 ### Limitations
 
-- **Local only LLM**  
-  Requires Ollama and a local llama3 model running on the same machine.
-- **No authentication / multi‑user separation**  
-  Designed as a single‑user demo app, not a production multi‑tenant service.
-- **Limited document types**  
-  Currently targets PDFs and plain text files; no Word, Excel, or web URLs yet.
-- **Heuristic document typing**  
-  HR vs Project vs Other is inferred via simple filename/text keywords, not a robust classifier.
-- **No online updates**  
-  New documents require re‑running the ingestion script (or adding incremental ingestion logic).
+- **Local-only LLM** – Requires Groq API key and a local llama-3 model.
+- **No authentication or multi-user separation** – single-user demo app.
+- **Limited document types** – only PDFs and TXT files supported.
+- **Heuristic document typing** – infers HR vs Project vs Other using simple keywords.
+- **No automatic updates** – new documents require re-running `ingest.py`.
 
 ---
 
@@ -65,146 +62,115 @@ You can switch between different “workspaces” (HR docs, project docs, or all
   - Python 3.x
 
 - **User Interface**
-  - **Streamlit** – reactive web UI for the QA interface and chat history.
+  - **Streamlit** – reactive web UI for QA interface and chat history.
 
 - **Embeddings & Retrieval**
-  - **SentenceTransformers** – `all-MiniLM-L6-v2` model for text embeddings.
+  - **SentenceTransformers** – `all-MiniLM-L6-v2` for embedding generation.
   - **Chroma** – local vector database for storing and querying embeddings.
-  - **NumPy + scikit‑learn** – cosine similarity over stored embedding vectors.
+  - **NumPy + scikit-learn** – cosine similarity over embeddings.
 
 - **Document Handling**
-  - PDF loaders (via LangChain community integrations).
+  - PDF and TXT loaders via LangChain community integrations.
   - Recursive character text splitter for chunking.
 
 - **LLM / RAG**
-  - **Ollama** – to run **llama3** locally.
-  - Python client for Ollama to send prompts and receive responses.
+  - **Groq Python Client** – sends prompts to local llama-3 model for responses.
 
-No paid external APIs are required; everything runs locally on your machine.
+- **Environment Variables**
+  - `.env` file for storing **GROQ_API_KEY** securely.
 
 ---
 
 ## 📂 Project Structure
 
 knowledge-agent/
-│── app.py # Streamlit app: UI, retrieval, Ollama-based answering, workspaces, chat
-│── ingest.py # Ingests documents, builds embeddings + metadata, stores in Chroma
-│── docs/ # PDF/TXT documents to ingest (HR, projects, etc.)
-│── vectorstore/ # Auto-created Chroma DB (can be deleted and regenerated)
+│── app.py # Streamlit app: UI, retrieval, Groq LLM, chat
+│── ingest.py # Document ingestion, chunking, embedding storage
+│── docs/ # PDFs/TXT files to ingest
+│── vectorstore/ # Auto-generated Chroma DB (can be deleted)
+│── .env # GROQ_API_KEY (not committed)
 │── requirements.txt # Python dependencies
-│── architecture.png # High-level architecture diagram of the agent
-│── README.md # Project documentation (this file)
-│── .gitignore # Ignore vectorstore, venv, etc.
-
-text
+│── .gitignore # Files to ignore in Git
+│── README.md # Project documentation
 
 ---
-
-## 🛠 Setup & Run Instructions
-
-Follow these steps to run the project on your local machine.
+🛠  Setup & Run Instructions
 
 ### 1. Clone the repository
 
 git clone https://github.com/<your-username>/knowledge-agent.git
 cd knowledge-agent
-
-text
-
-### 2. Create and activate a virtual environment (recommended)
-
+### 2. Create and activate virtual environment
 python -m venv .venv
 
-text
-
-**Windows:**
-
+Windows:
 .venv\Scripts\activate
 
-
-**macOS / Linux:**
-
+macOS/Linux:
 source .venv/bin/activate
 
 ### 3. Install dependencies
 
 pip install -r requirements.txt
+### 4. Configure Groq API Key
+Create a .env file in the project root.
 
-
-### 4. Install and prepare Ollama + llama3
-
-1. Install Ollama from the official website and complete the setup.  
-2. Make sure Ollama is running (it usually starts a local service).  
-3. Download the llama3 model:
-
-ollama pull llama3
-
+Add your Groq API key:
+GROQ_API_KEY=your_api_key_here
 ### 5. Add documents
+Place your HR or project PDFs/TXT files in the docs/ folder.
 
-Place your company or sample documents into the `docs/` folder, for example:
-
-- `hr-faq.txt`
-- `leave-policy.pdf`
-- `employee-handbook.pdf`
-- `onboarding-guide.pdf`
-- `yoga_pose_detection_overview.pdf`
-- `fracture_detection_project.pdf`
-
-### 6. Run the ingestion script
-
-This parses documents, chunks them, creates embeddings, and stores them in Chroma.
+### 6. Run ingestion
 
 python ingest.py
-
-If you add or change documents later, run this command again.  
-You can delete the `vectorstore/` folder to force a full rebuild if needed.
-
+If you want to rebuild embeddings, delete the vectorstore/ folder first:
+rm -r vectorstore
 ### 7. Start the Streamlit app
 
 streamlit run app.py
-
-Open the URL shown in the terminal (usually `http://localhost:8501`).
+Open http://localhost:xxxx in your browser.
 
 ### 8. Use the agent
+Select a Workspace from the sidebar (All, HR Docs, Projects).
 
-1. Select a **Workspace** from the sidebar:
-   - `All`, `HR Docs`, or `Projects`.
-2. Type your question (for example, “What is the notice period?” or “What does the yoga project do?”).
-3. Click **Get Answer**.
-4. Explore:
-   - The concise answer generated by the agent.
-   - **Sources (top matches)** to see which documents were used.
-   - **Chat history** to follow the conversation.
-5. Click **🧹 Clear chat history** in the sidebar to reset the conversation and start fresh.
+Ask questions in the text input box.
 
-## 🚀 Potential Improvements
+Click Get Answer.
 
-- **Richer RAG & ranking**
-  - Add re‑ranking of retrieved chunks using another model.
-  - Use similarity + keyword filters or hybrid search (BM25 + vectors).
+Check sources in the Sources expander.
 
-- **Better workspace & metadata handling**
-  - Store and display more metadata (author, date, version).
-  - Allow dynamic tagging and filtering (e.g., “Policy”, “Project”, “Onboarding”).
+Follow conversation using Chat History.
 
-- **Advanced chat features**
-  - Multi‑session chat with saved histories.
-  - User identities and per‑user context.
-
-- **Document ingestion enhancements**
-  - Upload files directly from the Streamlit UI.
-  - Support for more formats: DOCX, HTML, CSV, etc.
-  - Background ingestion jobs for large document sets.
-
-- **Deployment**
-  - Containerize with Docker.
-  - Deploy on a small cloud VM with Ollama + Streamlit.
-  - Add simple authentication for internal company use.
-
-- **Evaluation & logging**
-  - Log questions, answers, and sources for offline evaluation.
-  - Add basic metrics: hit rate, average latency, and feedback thumbs‑up/down.
+Clear session with 🧹 Clear chat history.
 
 ---
 
-This project demonstrates a complete, end‑to‑end RAG pipeline using only local components (Chroma + Ollama), wrapped in a clean Streamlit interface—ideal as a portfolio‑ready AI agent for HR, operations, or internal knowledge bases.
+## 🚀 Potential Improvements
+
+Richer retrieval and ranking  
+- Re-rank retrieved chunks using an additional model.  
+- Combine vector search with keyword-based hybrid search for better accuracy on policy-style documents.
+
+Enhanced workspaces and metadata  
+- Store richer metadata such as author, version, and last-updated date for each document.  
+- Add dynamic tagging for document types (e.g., “Policy”, “FAQ”, “Project Spec”) and allow filtering by tag.
+
+Advanced chat  
+- Support multi-session chat with saved histories that can be revisited later.  
+- Add user-specific contexts and identities so the agent can personalize answers.
+
+Document ingestion  
+- Allow users to upload files directly through the Streamlit interface instead of copying into the `docs/` folder.  
+- Support additional formats such as DOCX, HTML, and CSV.  
+- Add background ingestion jobs for large datasets so the UI stays responsive.
+
+Deployment  
+- Containerize the app with Docker for easy deployment.  
+- Deploy on a small cloud VM together with the model backend and Streamlit.  
+- Add basic authentication so only internal users can access the agent.
+
+Monitoring and evaluation  
+- Log questions, answers, and retrieved sources for offline evaluation and debugging.  
+- Track metrics like response quality, retrieval accuracy, and latency over time.
+
+This project already provides a complete local RAG pipeline using a vector database plus a local LLM, wrapped in a clean Streamlit interface, making it a strong portfolio-ready AI agent for internal knowledge bases.

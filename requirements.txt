@@ -7,3 +7,6 @@ chromadb
 pypdf
 numpy
 scikit-learn
+python-dotenv
+groq
+

@@ -10,61 +10,58 @@ DB_DIR = "vectorstore"
 COLLECTION_NAME = "knowledge_base"
 
 
-def infer_doc_type(filename: str) -> str:
-    """Very simple heuristic to label docs as hr / project / other."""
+def infer_doc_type(filename):
     name = filename.lower()
-    if any(key in name for key in ["leave", "policy", "handbook", "onboarding", "hr-faq", "hr"]):
+    if any(x in name for x in ["leave", "policy", "handbook", "hr"]):
         return "hr"
-    if any(key in name for key in ["yoga", "fracture", "vision", "project"]):
+    if any(x in name for x in ["yoga", "fracture", "vision", "project"]):
         return "project"
     return "other"
 
 
-def load_documents():
+def load_docs():
     documents = []
-    for filename in os.listdir(DOCS_DIR):
-        filepath = os.path.join(DOCS_DIR, filename)
-        if filename.lower().endswith(".pdf"):
-            loader = PyPDFLoader(filepath)
-            docs = loader.load()
-        elif filename.lower().endswith(".txt"):
-            loader = TextLoader(filepath, encoding="utf-8")
-            docs = loader.load()
+    for file in os.listdir(DOCS_DIR):
+        path = os.path.join(DOCS_DIR, file)
+
+        if file.endswith(".pdf"):
+            loader = PyPDFLoader(path)
+            items = loader.load()
+        elif file.endswith(".txt"):
+            loader = TextLoader(path, encoding="utf-8")
+            items = loader.load()
         else:
             continue
 
-        doc_type = infer_doc_type(filename)
-        for d in docs:
-            # store filename + type as metadata
-            if d.metadata is None:
-                d.metadata = {}
-            d.metadata["source"] = filename
+        doc_type = infer_doc_type(file)
+
+        for d in items:
+            d.metadata["source"] = file
             d.metadata["doc_type"] = doc_type
             documents.append(d)
 
     return documents
 
 
-def split_documents(documents):
+def split_docs(documents):
     splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200)
-    chunks = splitter.split_documents(documents)
-    return chunks
+    return splitter.split_documents(documents)
 
 
 def main():
-    print("🚀 Starting ingestion process...")
+    print("🚀 Starting ingestion...")
 
-    docs = load_documents()
-    print(f"📚 Loaded documents: {len(docs)}")
+    docs = load_docs()
+    print(f"Loaded: {len(docs)} docs")
 
-    chunks = split_documents(docs)
-    print(f"🔹 Created chunks: {len(chunks)}")
+    chunks = split_docs(docs)
+    print(f"Chunks: {len(chunks)}")
 
     embedder = SentenceTransformer("all-MiniLM-L6-v2")
-    texts = [chunk.page_content for chunk in chunks]
+    texts = [c.page_content for c in chunks]
     embeddings = embedder.encode(texts, show_progress_bar=True)
     ids = [str(uuid.uuid4()) for _ in texts]
-    metadatas = [chunk.metadata for chunk in chunks]
+    metadatas = [c.metadata for c in chunks]
 
     vectorstore = Chroma(
         persist_directory=DB_DIR,
@@ -79,7 +76,7 @@ def main():
         metadatas=metadatas,
     )
 
-    print("🎉 Ingestion complete! Knowledge base is ready.")
+    print("🎉 Ingestion complete!")
 
 
 if __name__ == "__main__":
